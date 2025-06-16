@@ -1,6 +1,6 @@
 module github.com/GinArea/gobinance
 
-go 1.23.8
+go 1.21
 
 require github.com/msw-x/moon v0.7.47
 
