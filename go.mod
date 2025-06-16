@@ -1,4 +1,4 @@
-module github.com/GinArea/gobinance
+module github.com/ginarea/gobinance
 
 go 1.21
 
