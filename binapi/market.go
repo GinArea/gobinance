@@ -122,3 +122,43 @@ type ExchangeInfoRequest struct{}
 func (r ExchangeInfoRequest) Do(c *Client) Response[ExchangeInfo] {
 	return GetPub(c, "exchangeInfo", r, identity[ExchangeInfo])
 }
+
+type BookTicker struct {
+	Symbol       string        `json:"symbol"`
+	Pair         string        `json:"pair"`
+	BidPrice     ujson.Float64 `json:"bidPrice"`
+	BidQty       ujson.Float64 `json:"bidQty"`
+	AskPrice     ujson.Float64 `json:"askPrice"`
+	AskQty       ujson.Float64 `json:"askQty"`
+	Time         int64         `json:"time"`
+	LastUpdateId int64         `json:"lastUpdateId"`
+}
+
+type BookTickerRequest struct {
+	Symbol string `url:",omitempty"`
+}
+
+func (c *Client) GetBookTickers(req BookTickerRequest) Response[[]BookTicker] {
+	if req.Symbol == "" || c.category == CoinMargin {
+		return req.Do(c)
+	} else {
+		respSingle := req.DoSingle(c)
+		respArray := Response[[]BookTicker]{
+			Data:       []BookTicker{respSingle.Data},
+			Limit:      respSingle.Limit,
+			Error:      respSingle.Error,
+			StatusCode: respSingle.StatusCode,
+			NetError:   respSingle.NetError,
+		}
+		return respArray
+	}
+
+}
+
+func (r BookTickerRequest) Do(c *Client) Response[[]BookTicker] {
+	return GetPub(c, "ticker/bookTicker", r, identity[[]BookTicker])
+}
+
+func (r BookTickerRequest) DoSingle(c *Client) Response[BookTicker] {
+	return GetPub(c, "ticker/bookTicker", r, identity[BookTicker])
+}
