@@ -86,5 +86,4 @@ func (r *response[T]) parseJson(data uhttp.Response) error {
 		return nil
 	}
 	return err
-	//return fmt.Errorf("unrecognized response format or JSON parse error")
 }

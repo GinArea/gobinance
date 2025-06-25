@@ -1,6 +1,9 @@
 package binapi
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/msw-x/moon/ujson"
 )
 
@@ -161,4 +164,122 @@ func (r BookTickerRequest) Do(c *Client) Response[[]BookTicker] {
 
 func (r BookTickerRequest) DoSingle(c *Client) Response[BookTicker] {
 	return GetPub(c, "ticker/bookTicker", r, identity[BookTicker])
+}
+
+type Candle struct {
+	OpenTime        int64   `json:"-"`
+	Open            float64 `json:"-"`
+	High            float64 `json:"-"`
+	Low             float64 `json:"-"`
+	Close           float64 `json:"-"`
+	Volume          float64 `json:"-"`
+	CloseTime       int64   `json:"-"`
+	AssetVolume     float64 `json:"-"` // Quote for linear/spot, Base for inverse
+	NumberOfTrades  int     `json:"-"`
+	TakerBuyVolume1 float64 `json:"-"` // Taker buy base asset volume for linear/spot. // Taker buy volume - for inverse.
+	TakerBuyVolume2 float64 `json:"-"` // Taker buy quote asset volume for linear/spot. // Taker buy base asset volume - for inverse
+}
+
+type RawCandle [12]interface{}
+
+func ConvertRawToCandle(raw RawCandle) (Candle, error) {
+	var c Candle
+	var err error
+
+	// Helpers
+	toInt64 := func(v interface{}) (int64, error) {
+		switch val := v.(type) {
+		case float64:
+			return int64(val), nil
+		case string:
+			return strconv.ParseInt(val, 10, 64)
+		default:
+			return 0, fmt.Errorf("cannot convert %v (%T) to int64", v, v)
+		}
+	}
+
+	toFloat64 := func(v interface{}) (float64, error) {
+		switch val := v.(type) {
+		case float64:
+			return val, nil
+		case string:
+			return strconv.ParseFloat(val, 64)
+		default:
+			return 0, fmt.Errorf("cannot convert %v (%T) to float64", v, v)
+		}
+	}
+
+	toInt := func(v interface{}) (int, error) {
+		switch val := v.(type) {
+		case float64:
+			return int(val), nil
+		case string:
+			n, err := strconv.Atoi(val)
+			return n, err
+		default:
+			return 0, fmt.Errorf("cannot convert %v (%T) to int", v, v)
+		}
+	}
+
+	// Conversion
+	if c.OpenTime, err = toInt64(raw[0]); err != nil {
+		return c, err
+	}
+	if c.Open, err = toFloat64(raw[1]); err != nil {
+		return c, err
+	}
+	if c.High, err = toFloat64(raw[2]); err != nil {
+		return c, err
+	}
+	if c.Low, err = toFloat64(raw[3]); err != nil {
+		return c, err
+	}
+	if c.Close, err = toFloat64(raw[4]); err != nil {
+		return c, err
+	}
+	if c.Volume, err = toFloat64(raw[5]); err != nil {
+		return c, err
+	}
+	if c.CloseTime, err = toInt64(raw[6]); err != nil {
+		return c, err
+	}
+	if c.AssetVolume, err = toFloat64(raw[7]); err != nil {
+		return c, err
+	}
+	if c.NumberOfTrades, err = toInt(raw[8]); err != nil {
+		return c, err
+	}
+	if c.TakerBuyVolume1, err = toFloat64(raw[9]); err != nil {
+		return c, err
+	}
+	if c.TakerBuyVolume2, err = toFloat64(raw[10]); err != nil {
+		return c, err
+	}
+	return c, nil
+}
+
+type CandleRequest struct {
+	Symbol    string
+	Interval  Bar
+	StartTime int64 `url:",omitempty"`
+	EndTime   int64 `url:",omitempty"`
+	Limit     int   `url:",omitempty"`
+}
+
+func (o *Client) GetCandle(v CandleRequest) Response[[]Candle] {
+	return v.Do(o)
+}
+
+func (o CandleRequest) Do(c *Client) Response[[]Candle] {
+	return GetPub(c, "klines", o, func(l []RawCandle) (r []Candle, err error) {
+		for _, v := range l {
+			var s Candle
+			s, err = ConvertRawToCandle(v)
+			if err != nil {
+				break
+			}
+			r = append(r, s)
+		}
+		return
+	})
 }
