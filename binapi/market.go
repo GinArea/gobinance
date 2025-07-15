@@ -292,11 +292,11 @@ func GetPath(c Category, path string) string {
 	// for public methods
 	switch c {
 	case Spot:
-		path = "/api/v3/" + path
+		path = "api/v3/" + path
 	case CoinMargin:
-		path = "/dapi/v1/" + path
+		path = "dapi/v1/" + path
 	case UsdtMargin:
-		path = "/fapi/v1/" + path
+		path = "fapi/v1/" + path
 	}
 	return path
 }
