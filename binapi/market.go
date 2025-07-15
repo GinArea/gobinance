@@ -123,7 +123,8 @@ func (c *Client) GetExchangeInfo() Response[ExchangeInfo] {
 type ExchangeInfoRequest struct{}
 
 func (r ExchangeInfoRequest) Do(c *Client) Response[ExchangeInfo] {
-	return GetPub(c, "exchangeInfo", r, identity[ExchangeInfo])
+	path := GetPath(c.category, "exchangeInfo")
+	return GetPub(c, path, r, identity[ExchangeInfo])
 }
 
 type BookTicker struct {
@@ -159,11 +160,13 @@ func (c *Client) GetBookTickers(req BookTickerRequest) Response[[]BookTicker] {
 }
 
 func (r BookTickerRequest) Do(c *Client) Response[[]BookTicker] {
-	return GetPub(c, "ticker/bookTicker", r, identity[[]BookTicker])
+	path := GetPath(c.category, "ticker/bookTicker")
+	return GetPub(c, path, r, identity[[]BookTicker])
 }
 
 func (r BookTickerRequest) DoSingle(c *Client) Response[BookTicker] {
-	return GetPub(c, "ticker/bookTicker", r, identity[BookTicker])
+	path := GetPath(c.category, "ticker/bookTicker")
+	return GetPub(c, path, r, identity[BookTicker])
 }
 
 type Candle struct {
@@ -271,7 +274,8 @@ func (o *Client) GetCandle(v CandleRequest) Response[[]Candle] {
 }
 
 func (o CandleRequest) Do(c *Client) Response[[]Candle] {
-	return GetPub(c, "klines", o, func(l []RawCandle) (r []Candle, err error) {
+	path := GetPath(c.category, "klines")
+	return GetPub(c, path, o, func(l []RawCandle) (r []Candle, err error) {
 		for _, v := range l {
 			var s Candle
 			s, err = ConvertRawToCandle(v)
@@ -282,4 +286,17 @@ func (o CandleRequest) Do(c *Client) Response[[]Candle] {
 		}
 		return
 	})
+}
+
+func GetPath(c Category, path string) string {
+	// for public methods
+	switch c {
+	case Spot:
+		path = "/api/v3/" + path
+	case CoinMargin:
+		path = "/dapi/v1/" + path
+	case UsdtMargin:
+		path = "/fapi/v1/" + path
+	}
+	return path
 }

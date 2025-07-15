@@ -34,7 +34,7 @@ func (o *Client) WithCategory(c Category) *Client {
 	case CoinMargin:
 		o.WithBaseUrl(CoinMarginBaseUrl)
 	case Spot:
-		o.WithBaseUrl(SpotBaseUrl)
+		o.WithBaseUrl(SpotOrSignedBaseUrl)
 	}
 	return o
 }

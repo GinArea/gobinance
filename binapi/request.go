@@ -13,6 +13,10 @@ func GetPub[R, T any](c *Client, path string, req any, transform func(R) (T, err
 	return request(c, http.MethodGet, path, req, transform, false)
 }
 
+func Get[R, T any](c *Client, path string, req any, transform func(R) (T, error)) Response[T] {
+	return request(c, http.MethodGet, path, req, transform, true)
+}
+
 func request[R, T any](c *Client, method string, path string, request any, transform func(R) (T, error), sign bool) (r Response[T]) {
 	var attempt int
 	for {
@@ -33,6 +37,9 @@ func req[R, T any](c *Client, method string, path string, request any, transform
 	switch method {
 	case http.MethodGet:
 		perf = c.c.Get(path).Params(request)
+		if sign && c.s != nil {
+			perf.Params(c.s.getSignatureFields(perf.Request.Params))
+		}
 	case http.MethodPost:
 		perf = c.c.Post(path).Json(request)
 	default:
@@ -45,8 +52,7 @@ func req[R, T any](c *Client, method string, path string, request any, transform
 		}
 		switch method {
 		case http.MethodGet:
-			//TODO
-			//c.s.HeaderGet(perf.Request.Header, perf.Request.Params, path)
+			c.s.HeaderGet(perf.Request.Header)
 		case http.MethodPost:
 			//TODO
 			//c.s.HeaderPost(perf.Request.Header, perf.Request.Body, path)
