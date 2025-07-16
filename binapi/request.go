@@ -60,6 +60,7 @@ func req[R, T any](c *Client, method string, path string, request any, transform
 	}
 	httpResponse := perf.Do()
 	if httpResponse.Error == nil {
+		r.StatusCode = httpResponse.StatusCode
 		if httpResponse.StatusCode == http.StatusOK {
 			if httpResponse.BodyExists() {
 				raw := new(response[R])

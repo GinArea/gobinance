@@ -2,7 +2,6 @@ package binapi
 
 import (
 	"fmt"
-	"slices"
 
 	"github.com/msw-x/moon/ujson"
 )
@@ -26,11 +25,4 @@ func (o *Error) Empty() bool {
 
 func (o *Error) Error() string {
 	return fmt.Sprintf("code[%d]: %s", o.Code.Value(), o.Text)
-}
-
-func (o *Error) ApiKeyInvalid() bool {
-	codes := []ujson.Int64{
-		-1, //TODO
-	}
-	return slices.Contains(codes, o.Code)
 }
